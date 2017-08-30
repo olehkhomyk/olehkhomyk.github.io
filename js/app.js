@@ -1,5 +1,6 @@
 var app = angular.module('twitterModule', ['ui.router']);
-app.config(['$stateProvider', function($stateProvider) {
+
+app.config(['$stateProvider' , function ($stateProvider) {
     $stateProvider
         .state("sign-in", {
             url: '/sign-in',
@@ -30,10 +31,10 @@ app.config(['$stateProvider', function($stateProvider) {
             templateUrl: "templates/posts.html",
             controller: "postsController",
             controllerAs: "postCtrl"
-        })
+        });
 }]);
 
-app.controller('appCtrl', ['UserService', 'PostsService', '$scope', function (UserService, PostsService, $scope, $window, $rootScope) {
+app.controller('appCtrl', ['UserService', 'PostsService', function (UserService, PostsService) {
     var vm = this;
 
     vm.logOut = function () {
@@ -75,11 +76,11 @@ app.controller('postsController', ['PostsService', function (PostsService) {
 }]);
 
 app.controller('profileCtrl', ['UserService', function (UserService) {
-   var vm = this;
-   vm.currentUser = new Object();
+    var vm = this;
+    vm.currentUser = new Object();
 
     vm.addFollowUser = function (id) {
-       UserService.addFollowUser(id);
+        UserService.addFollowUser(id);
     };
 
     vm.removeFollowUser = function (id) {
@@ -91,18 +92,18 @@ app.controller('profileCtrl', ['UserService', function (UserService) {
     };
 
     vm.checkFollowUsers = function (id) {
-      return vm.currentUser.followUsers.includes(id);
+        return vm.currentUser.followUsers.includes(id);
     };
 
-   vm.init = function () {
-      vm.currentUser = UserService.getCurrentUser();
-      UserService.checkAuthorization();
-   };
+    vm.init = function () {
+        vm.currentUser = UserService.getCurrentUser();
+        UserService.checkAuthorization();
+    };
 
     vm.init();
 }]);
 
-app.controller('registrationController',['UserService', '$location', function (UserService, $location) {
+app.controller('registrationController', ['UserService', '$location', function (UserService, $location) {
     var vm = this;
 
     vm.registration = function () {
@@ -114,37 +115,38 @@ app.controller('registrationController',['UserService', '$location', function (U
             login: vm.newUser.login,
             password: vm.newUser.password
         };
+
         UserService.registration(user);
         $location.path('profile');
     }
 }]);
 
-app.controller('signInCtrl',['UserService', '$location', function (UserService, $location) {
+app.controller('signInCtrl', ['UserService', '$location', function (UserService, $location) {
     var vm = this;
 
     vm.signIn = function () {
-        if(vm.account) {
+        if (vm.account) {
             UserService.signIn(vm.account)
                 .then(function (check) {
-                if(check) {
-                    $location.path('profile');
-                }
-            })
+                    if (check) {
+                        $location.path('profile');
+                    }
+                })
                 .catch(function (err) {
-                console.log(err);
-            })
+                    alert(err);
+                })
 
         }
     };
 }]);
 
 app.controller('userListController', ['UserService', function (UserService) {
-   var vm = this;
-   vm.users = new Array();
+    var vm = this;
+    vm.users = new Array();
 
-   vm.init = function () {
-      vm.users = UserService.getAllUsers();
-   };
+    vm.init = function () {
+        vm.users = UserService.getAllUsers();
+    };
 
     vm.init();
 }]);
@@ -183,7 +185,7 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
 
     function initFakePosts() {
         var postsFromStorage = JSON.parse(localStorage.getItem('fakePosts'));
-        if(postsFromStorage) {
+        if (postsFromStorage) {
             fakePosts = postsFromStorage;
             return;
         };
@@ -196,6 +198,14 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
         localStorage.setItem('fakePosts', postsJson);
     };
 
+    /**
+     * Create new post
+     * @param title
+     * @param message
+     * @param userId
+     * @param date
+     * @constructor
+     */
     function Post(title, message, userId, date) {
         this.id = fakePosts.length ? fakePosts[fakePosts.length - 1].id + 1 : 1;
         this.title = title;
@@ -211,10 +221,10 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
      */
     function initPostsToCurrentUser() {
         posts = [];
-        var followUsers  = UserService.getCurrentUser().followUsers;
-        for(var i = 0; i < followUsers.length; i++) {
-            for(var j = 0; j < fakePosts.length; j++) {
-                if(followUsers[i] === fakePosts[j].user.id) {
+        var followUsers = UserService.getCurrentUser().followUsers;
+        for (var i = 0; i < followUsers.length; i++) {
+            for (var j = 0; j < fakePosts.length; j++) {
+                if (followUsers[i] === fakePosts[j].user.id) {
                     posts.push(fakePosts[j]);
                 }
             }
@@ -235,8 +245,8 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
      * Update post in local storage
      */
     function updateStorage() {
-       var posts = JSON.stringify(fakePosts);
-       localStorage.setItem('fakePosts', posts)
+        var posts = JSON.stringify(fakePosts);
+        localStorage.setItem('fakePosts', posts)
     }
 
     /**
@@ -252,8 +262,8 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
      * @param comment
      */
     function addCommentsToPost(comment) {
-        for(var i = 0; i < fakePosts.length; i++) {
-            if(fakePosts[i].id === comment.postId) {
+        for (var i = 0; i < fakePosts.length; i++) {
+            if (fakePosts[i].id === comment.postId) {
                 comment.userName = UserService.getUserById(UserService.getCurrentUser().id).name;
                 fakePosts[i].comments.push(comment);
                 updateStorage();
@@ -269,11 +279,11 @@ app.factory('PostsService', ['$q', 'UserService', function ($q, UserService) {
      */
     function likePost(postId) {
         var currentUserId = UserService.getCurrentUser().id;
-        for(var i = 0; i < fakePosts.length; i++) {
-            if(fakePosts[i].id === postId) {
-                if(fakePosts[i].likes.includes(currentUserId)) {
-                    for(var j = 0; j <  fakePosts[i].likes.length; j++) {
-                        if(fakePosts[i].likes[j] === currentUserId) {
+        for (var i = 0; i < fakePosts.length; i++) {
+            if (fakePosts[i].id === postId) {
+                if (fakePosts[i].likes.includes(currentUserId)) {
+                    for (var j = 0; j < fakePosts[i].likes.length; j++) {
+                        if (fakePosts[i].likes[j] === currentUserId) {
                             fakePosts[i].likes.splice(j, 1);
                             updateStorage();
                             return;
@@ -333,8 +343,8 @@ var fakePostMessage = [
         message: ' Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?',
         id: 1
     }
-
 ];
+
 app.factory('UserService', ['$q', '$location', function ($q, $location) {
     var fakeUsers = [];
     var currentUser = {};
@@ -343,24 +353,24 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
      * function to create fake user list
      */
     function initFakeUsers() {
-            var usersFromStorage = JSON.parse(localStorage.getItem('fakeUsers'));
-            if (usersFromStorage) {
-                usersFromStorage.forEach(function (user, index) {
-                    fakeUsers.push(new User(user.name, user.sname, user.login, user.password, user.age, user.mail, user.followUsers, user.online))
-                });
-                return;
-            }
-            ;
-
-            allFakeUsers.forEach(function (user) {
-                fakeUsers.push(new User(user.name, user.sname, user.login, user.password, user.phone, user.email));
+        var usersFromStorage = JSON.parse(localStorage.getItem('fakeUsers'));
+        if (usersFromStorage) {
+            usersFromStorage.forEach(function (user) {
+                fakeUsers.push(new User(user.name, user.sname, user.login, user.password, user.age, user.mail, user.followUsers, user.online))
             });
+            return;
+        };
 
-            var usersJson = JSON.stringify(fakeUsers);
-            localStorage.setItem('fakeUsers', usersJson);
+        allFakeUsers.forEach(function (user) {
+            fakeUsers.push(new User(user.name, user.sname, user.login, user.password, user.phone, user.email));
+        });
+
+        var usersJson = JSON.stringify(fakeUsers);
+        localStorage.setItem('fakeUsers', usersJson);
     };
 
     /**
+     * Create new User
      * @param name
      * @param sname
      * @param login
@@ -442,6 +452,10 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
         });
     };
 
+    /**
+     * Registration (add new user to fake users list)
+     * @param user {name, sname, login, password, phone, mail}
+     */
     function registration(user) {
         fakeUsers.push(new User(user.name, user.sname, user.login, user.password, user.phone, user.mail));
         currentUser = fakeUsers[fakeUsers.length - 1];
@@ -453,8 +467,8 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
      * @returns {{name, sname, phone, mail, posts, online, followUsers, id}}
      */
     function getUserById(id) {
-        for(var i = 0; i < fakeUsers.length; i++) {
-            if(fakeUsers[i].id === id) {
+        for (var i = 0; i < fakeUsers.length; i++) {
+            if (fakeUsers[i].id === id) {
                 return fakeUsers[i].getInfo();
             }
         }
@@ -475,15 +489,20 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
         return fakeUsers;
     };
 
+    /**
+     * Log out from account
+     * Set user to offline
+     */
     function logOut() {
+        toDoUserOffline();
         sessionStorage.removeItem('currentUser');
         currentUser = {};
-        this.checkAuthorization();
+        checkAuthorization();
     }
 
     /**
      * check if user is in sessionStorage
-     * if user is not, redirect to sing-in
+     * if user is not, redirect to sing-in page
      */
     function checkAuthorization() {
         var userFromStorage = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -503,14 +522,18 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
     }
 
     function updateStorage() {
-        debugger;
         var users = JSON.stringify(getAllUsers());
         localStorage.setItem('fakeUsers', users);
     }
 
-    function clearOnlineUser() {
-        for(var i = 0; i < fakeUsers.length; i++) {
-            if(fakeUsers[i].id === currentUser.id) {
+    /**
+     * find current user in fake users list
+     * set prop online for current user in  fake users list to false
+     * update local storage
+     */
+    function toDoUserOffline() {
+        for (var i = 0; i < fakeUsers.length; i++) {
+            if (fakeUsers[i].id === getCurrentUser().id) {
                 fakeUsers[i].online = false;
                 updateStorage();
                 return;
@@ -529,7 +552,7 @@ app.factory('UserService', ['$q', '$location', function ($q, $location) {
         checkAuthorization: checkAuthorization,
         logOut: logOut,
         registration: registration,
-        clearOnlineUser: clearOnlineUser
+        toDoUserOffline: toDoUserOffline
     }
 }]);
 
@@ -589,6 +612,5 @@ var allFakeUsers = [
         password: '666',
         phone: '23',
         email: 'yura.songer@gmail.com'
-    },
-
+    }
 ];
